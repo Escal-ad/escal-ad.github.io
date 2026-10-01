@@ -1,0 +1,338 @@
+/* ============================================================================
+   responsive.css — 四个断点 + prefers-reduced-motion 降级
+   来源：DESIGN.md §9 Responsive Behavior
+   断点：≥1200 / 900–1199 / 601–899 / ≤600
+   ⚠️ 本文件必须最后加载，它会覆盖前面所有文件里的默认值。
+   ========================================================================== */
+
+/* ============================================================================
+   1. 大屏（≥1200px）：全套效果开启
+   ========================================================================== */
+
+@media (min-width: 1200px) {
+  /* 右侧关卡轨道出现 */
+  .rail { display: flex; }
+
+  /* 底部通关胶囊让位给轨道 */
+  .clear-pill { display: none; }
+
+  /* Hero 标题的柔光（只在能动起来的大屏上加） */
+  .hero__h1 {
+    text-shadow: 0 0 40px rgba(var(--accent-rgb), 0.4);
+  }
+}
+
+/* ============================================================================
+   1.5 桌面（≥901px）：子页面「一屏一关」
+   ========================================================================== */
+
+/*
+  需求（2026-10-01）：子页面不要出现上下滑动，左右内容保持水平。
+  ——「左右保持水平」= 1 号数字仍在左、正文仍在右，左右并排；没有为了消掉滚动
+     把版面压成一栏。没有滚动之后，左栏那个 sticky 编号也就不会再和右栏错位。
+
+  为什么下限取 901px：
+    · ≤900px 是手机单列，正文本来就该往下滚，硬撑一屏只会把字挤扁；
+    · ≥901px 时 .level 至少是左右两栏，可以谈「一屏装得下」。
+
+  做法分两步：
+   ① 让 section 自己撑满一屏并把内容垂直居中（flex 竖排 + min-height:100svh）。
+      · 内容 + 上下留白装得下 → section 正好一屏，不滚；
+      · 装不下（窗口太矮）     → section 按内容长高（min-height 只是下限），
+                                 自动退回原来的正常滚动，顶部不会被裁掉。
+      padding 上 88 下 22：上面那 88 里含固定导航的 72px，所以正文第一行永远
+      不会钻到导航底下；上多下少，是因为顶部那条导航吃掉了视觉重心。
+   ② 再把关卡页自己的留白收一收，给「正好一屏」腾余量。
+      只动空隙，不动字号、不动行高 —— 读起来还是原样，只是上下空得少一点。
+
+  实测（1440 宽，窗口高 900）：「喜好与生活」的内容高度 748 → 690px，
+  加上 110px 留白正好 800px，所以窗口高度 ≥800px 时六个子页面全部一屏不滚；
+  高度再矮（例如 1440×768）就还是会滚，那个高度下没有不牺牲排版的做法。
+  ⚠️ 1024–1199px 宽时 .level 变成 1:1，右栏收窄到 456px，文字折行变多、
+     单页内容会涨到 850px 上下，那个宽度下依然装不进 900px 高的窗口（比改之前好，但仍会滚）。
+*/
+@media (min-width: 901px) {
+  .section--level {
+    min-height: 100vh;  /* 老浏览器兜底 */
+    min-height: 100svh; /* 手机上地址栏会伸缩，svh 取最矮那一档，不会抖 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: 88px 22px;
+  }
+
+  /* 下面 5 条都是关卡页专属的「收空隙」，原值见 layout.css：
+     .section__head 56 · .h2 12 · .level__body 32 · .grid-2 20 · .record-card 28 */
+  .section--level .section__head { margin-bottom: 34px; }
+  .section--level .section__head .h2 { margin-top: 8px; }
+  .section--level .level__body > * + * { margin-top: 20px; }
+  .section--level .grid-2 { gap: 16px; }
+  .section--level .record-card { padding: 20px; }
+}
+
+/* ============================================================================
+   2. 中大屏（900–1199px）
+   ========================================================================== */
+
+@media (max-width: 1199px) {
+  .rail { display: none; }
+
+  /* Bento 从 12 栏降为 6 栏：大卡占满，小卡对半分 */
+  .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+  .bento__item--nobita  { grid-column: span 6; }
+  .bento__item--shizuka { grid-column: span 3; }
+  .bento__item--suneo   { grid-column: span 3; }
+  .bento__item--gian    { grid-column: span 6; }
+  .bento__item--dora    { grid-column: span 6; }
+  .bento__item--door    { grid-column: span 6; }
+
+  /* 关卡双栏变 1:1，巨型编号缩小 */
+  .level {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  /* Hero 双栏变单栏靠左 */
+  .hero__inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .hero__aside { justify-content: flex-start; }
+
+  .pocket { max-width: 240px; }
+
+  /* 超大标题：真字号 76px 附近 */
+  .hero__h1 { font-size: clamp(52px, 8vw, 76px); }
+
+  .level__no { font-size: clamp(56px, 10vw, 96px); }
+}
+
+/* ============================================================================
+   2.5 导航挤不下（901–1100px）
+   ========================================================================== */
+
+/*
+  导航标签从「大雄」这类两个字换成「喜好与生活」这类四~五个字之后，
+  六条链接一整排要比原来宽约 60%，在 901–1100px 这段（容器已经变窄、
+  但还没到 ≤900px 的汉堡菜单）会被 flex 压到 min-content，
+  标签就折成两行（「喜好与生／活」）。
+
+  这里把每条链接里的两位编号收起来、内边距收窄：
+    编号 6 × 21px + 内边距 6 × 8px + 链接间距 10px ≈ 省下 184px
+  901px（最窄的桌面宽度）下，导航所需宽度从 991px 降到 807px，
+  容器只剩 827px 也排得开，六条标签各自保持一行。
+  编号没有丢：≤900px 的汉堡菜单里仍然显示「01 我的故事」。
+
+  （补记 2026-09-30：导航右侧那个「小红书」按钮也删掉了，
+  实际又省下约 110px，于是这一档收窄其实已经不必要了；
+  但注释保留 —— 万一以后把按钮加回来、或者再加链接，就不用重新调。）
+*/
+@media (max-width: 1100px) {
+  .nav__link { padding-inline: 10px; }
+  .nav__link .mono { display: none; }
+  .nav__links { gap: 2px; }
+}
+
+/* ============================================================================
+   3. 中小屏（601–899px）：单列 + 汉堡菜单
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* 桌面导航链接收起，汉堡出现 */
+  .nav__links { display: none; }
+  .nav__toggle { display: inline-flex; }
+
+  /*
+    小喇叭在 .nav__links 外面，桌面宽度下是被导航链接顶到右边的；
+    ≤900px 链接一藏起来它就会滑到站标旁边，所以要自己把左边那片空白
+    吃光（换 .nav__toggle 也让出 margin-left:auto，不然两份 auto 会
+    把空白对半分，喇叭跑到中间去）—— 顺序：站标 · 喇叭 · 汉堡。
+  */
+  .nav__sfx { margin-left: auto; }
+  .nav__toggle { margin-left: 0; }
+
+  .nav__inner { padding-inline: 24px; }
+
+  /* 分区上下留白减小（--level 是子页面正文区，--page 是它的新名字，两者并存） */
+  .section { padding-block: 96px; }
+  .section--level,
+  .section--page { padding-block: 96px; }
+  .section__head { margin-bottom: 40px; }
+
+  /* Bento 退化为单列，但保留各自的 min-height（不退化成等分） */
+  .bento { grid-template-columns: minmax(0, 1fr); }
+
+  .bento__item--nobita,
+  .bento__item--shizuka,
+  .bento__item--suneo,
+  .bento__item--gian,
+  .bento__item--dora,
+  .bento__item--door { grid-column: span 1; grid-row: auto; }
+
+  /* 用不同的最小高度保住"不等大"的节奏感 */
+  .bento__item--nobita  .level-card { min-height: 320px; }
+  .bento__item--shizuka .level-card,
+  .bento__item--suneo   .level-card { min-height: 200px; }
+  .bento__item--gian    .level-card { min-height: 240px; }
+  .bento__item--dora    .level-card { min-height: 260px; }
+  .bento__item--door    .level-card { min-height: 220px; }
+
+  /* 关卡双栏合并成单列；巨型编号挪到最上面 */
+  .level {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .level__aside {
+    position: static;
+    order: -1;
+  }
+
+  .level__no {
+    font-size: clamp(48px, 9vw, 72px);
+    /* 单列时编号排在正文上方，不需要 layout.css 里那个光学对齐的负边距 */
+    margin-top: 0;
+  }
+
+  /* 通用 2 栏网格变单列 */
+  .grid-2,
+  .grid-3 { grid-template-columns: minmax(0, 1fr); }
+
+  /* 身份卡改为纵向 */
+  .file-card__body { flex-direction: column; gap: 20px; }
+
+  .file-row { flex-direction: column; gap: 6px; }
+  .file-row__key { flex: 0 0 auto; }
+
+  /* 任意门纵向排列 */
+  .door { padding: 40px 28px; }
+  .door__inner { gap: 28px; }
+  .door__art { width: 88px; height: 120px; }
+
+  .container { padding-inline: 24px; }
+
+  /* 多页面外壳：头像圆盘收小（联系方式的两张卡由 pages.css 的 auto-fit 自己叠行） */
+  .avatar-card { max-width: 220px; }
+}
+
+/* ============================================================================
+   4. 小屏（≤600px）：单列流式，最省电的动效
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  .container { padding-inline: 20px; }
+
+  .section { padding-block: 72px; }
+  .section--level,
+  .section--page { padding-block: 72px; }
+  .section__head { margin-bottom: 32px; }
+
+  /* Hero */
+  .hero { padding-top: 104px; padding-bottom: 72px; }
+  .hero__h1 { font-size: clamp(38px, 11vw, 60px); }
+  .hero__lead { font-size: 16px; }
+  .hero__id { gap: 8px 12px; font-size: 13px; }
+  .hero__actions { gap: 12px; margin-top: 32px; }
+  .hero__actions .btn { width: 100%; }
+  .hero__scroll { display: none; }
+  .pocket { max-width: 200px; }
+
+  /* 编号再收一档 */
+  .level__no { font-size: clamp(44px, 12vw, 64px); }
+
+  /* 卡片内边距收紧 */
+  .level-card { padding: 24px; }
+  .file-card { padding: 24px; }
+  .record-card { padding: 22px; }
+  .tool-card { padding: 22px; }
+
+  /* 页脚：窄屏会折行，收紧一点 */
+  .footer { padding-block: 14px; }
+  .footer__inner { gap: 4px 10px; }
+
+  /* 迷你插画缩小，避免压到文字 */
+  .level-card__art { width: 48px; height: 48px; right: 18px; bottom: 18px; }
+
+  /* 正文行高与字号：不缩放字号，保持 16px 可读 */
+  body { font-size: 16px; }
+
+  /* 抽屉全宽感更强 */
+  .drawer { padding: 24px; }
+
+  /* 多页面外壳 */
+  .avatar-card { max-width: 190px; }
+}
+
+/* ============================================================================
+   5. 氛围层只在"大屏 + 允许动效"时才完全开启
+   （默认已在 layout.css 里给移动端 ×0.6 的收敛值）
+   ========================================================================== */
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .ambient { opacity: 1; }
+}
+
+@media (max-width: 1023px) {
+  /* 移动端隐藏点阵，只留极光（更省电） */
+  .dotgrid { display: none; }
+  .ambient { opacity: 0.6; }
+}
+
+/* ============================================================================
+   6. 无障碍：降低动态效果
+   所有入场动画直接落到终态；极光与点阵停止；不依赖任何 JS 判断
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 入场元素直接可见 */
+  .reveal,
+  .reveal-scale,
+  .stagger-reveal > *,
+  .hero__h1 .char-move,
+  .h2 .char-move {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .h2-rule { transform: scaleX(1) !important; }
+
+  /* 氛围层静止 */
+  .aurora__layer,
+  .dotgrid { animation: none !important; }
+
+  /* 光标相关的效果全部失效（JS 也不会初始化） */
+  .level-card::before,
+  .level-card::after { display: none !important; }
+
+  /* 拖动光痕：也是纯动效。JS 那边压根不会创建这块画布，这里再加一道保险 */
+  .drag-trail { display: none !important; }
+}
+
+/* ============================================================================
+   7. 打印（顺手做一点：去掉固定元素与背景层）
+   ========================================================================== */
+
+@media print {
+  .nav,
+  .rail,
+  .clear-pill,
+  .progress-bar,
+  .ambient,
+  .drawer,
+  .drawer-scrim { display: none !important; }
+
+  /* 打印时不覆盖颜色（保持 token 纪律：本文件不出现颜色字面值），
+     只保证固定层与背景层不占位置。 */
+  .section { break-inside: avoid; }
+}

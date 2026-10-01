@@ -1,0 +1,14 @@
+# ── 换行符统一成 LF ──────────────────────────────────────────────────────
+# Windows 上 Git 默认（core.autocrlf=true）会把文件检出成 CRLF，
+# 但生成脚本 tools\拆分生成子页面.py 写出来的 HTML 用的是 LF。
+# 两边不一致的话，每次跑完脚本 git 都会误报「这些文件被改了」，看着很烦。
+# 这里钉死：仓库里、本地工作区，全都用 LF。
+* text=auto eol=lf
+
+# ── 图片按二进制处理（不做任何换行符转换）──────────────────────────────
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.ico  binary
+*.gif  binary
+*.webp binary

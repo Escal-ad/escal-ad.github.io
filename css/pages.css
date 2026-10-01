@@ -1,0 +1,246 @@
+/* ============================================================================
+   pages.css — 多页面外壳（首页 + 6 个子页面共用）
+   ----------------------------------------------------------------------------
+   本站从「单页滚动闯关」改成了「首页 + 6 个独立子页面」，于是多出来这些零件：
+     ① .nav__link.is-current / [aria-current="page"]  当前页面的导航高亮
+     ② .contact-list / .contact-item                  联系方式页的「小红书 / 邮箱 / 微信」三张小卡
+     ③ .avatar-card / .avatar-card__photo             首页的头像大圆盘 + 圆盘里那张图
+
+   （后来陆续删掉的三样，都记在这里，免得以后以为漏了：
+     · .page-nav「上一篇 / 下一篇」 —— 导航栏本来就列着全部 6 个入口，翻页条是重复的
+     · .page-crumb「← 回首页」      —— 页面现在一屏装得下，顶部导航就在眼前
+     · .section--page 留白节奏      —— 子页面用的是 layout.css 的 .section--level，重复了
+     删掉后，responsive.css 里对应的断点覆盖规则和打印规则也一并清掉了。）
+
+   加载顺序：tokens → layout → components → 【pages】 → animations → responsive
+   ⚠️ 必须排在 responsive.css 之前：各屏幕断点的覆盖规则统一写在 responsive.css 里。
+   ⚠️ 本文件不出现任何颜色字面值，颜色一律写 var(--…)（tokens.css 是全站唯一色值出处）。
+
+   关于类名：子页面正文仍然复用旧的 .level / .level__aside / .level__body 这套类名。
+   它们现在只是「左栏大编号 + 右栏内容」的两栏布局，跟闯关已经没关系了；
+   改名要同时动 layout.css / components.css / responsive.css 三处，收益为零，故保持原样。
+   ========================================================================== */
+
+
+/* ============================================================================
+   1. 导航 · 当前页面高亮
+   静态多页面不需要 JS 去算滚动位置：直接在 HTML 里给当前页那条链接写死
+   class="is-current" aria-current="page" 就行，屏幕阅读器也会正确播报。
+   ========================================================================== */
+
+.nav__link.is-current,
+.nav__link[aria-current='page'] {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.nav__link.is-current .mono,
+.nav__link[aria-current='page'] .mono {
+  color: var(--accent);
+}
+
+.mobile-menu__item.is-current,
+.mobile-menu__item[aria-current='page'] {
+  background: var(--surface);
+  border-color: var(--border-hover);
+}
+
+/* 首页时 logo 本身就是「当前页」，给它一点颜色提示 */
+.nav__logo.is-current,
+.nav__logo[aria-current='page'] {
+  color: var(--accent);
+}
+
+
+/* ============================================================================
+   2. 子页面 · 联系方式页的「小红书 / 邮箱 / 微信」小卡
+   结构：.contact-list > .contact-item > 标签 / 值 / 一句小字。
+   三张卡长的完全一样，区别只在「值」那一行的元素：
+     · 小红书   <a class="contact-item__value contact-item__value--link">  站外跳转
+     · 邮箱 / 微信 <button class="…--copy">                                点了复制
+   两种都不是真正意义上的「像链接的静态文本」：没有额外的可见按钮，
+   那行字自己就是触发器。
+   整个 .contact-list 是 .level__body 的第一个元素（上面原本还有一段 .prose 引导语，
+   2026-10-01 按需求删了），所以它不吃 layout.css 的
+   `.level__body > * + * { margin-top: 32px }`。
+   ========================================================================== */
+
+.contact-list {
+  display: grid;
+  /* 三张卡纵向依次排列，任何屏幕宽度都是一列（2026-10-01 按需求改）。
+     以前是 repeat(auto-fit, minmax(260px, 1fr))，宽屏上会「上二下一」；
+     现在卡片宽度直接跟着右栏走，不需要媒体查询。 */
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  transition:
+    border-color 0.3s var(--ease-out),
+    background 0.3s var(--ease-out);
+}
+
+.contact-item:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.contact-item__label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--text-tertiary);
+}
+
+.contact-item__value {
+  font: 700 17px/1.5 var(--font-heading);
+  color: var(--text);
+  /* 邮箱那串比较长，窄屏宁可断行也别把卡片撑破 */
+  word-break: break-all;
+}
+
+/* ----------------------------------------------------------------------------
+   邮箱 / 微信号那行：**不显示「复制」按钮**，那串文字自己就是触发器。
+   那就不能让它长得像按钮 —— 把 <button> 的默认外观（背景 / 边框 / 居中 /
+   系统字体）全部清零，再把上面 .contact-item__value 的字体手动写回来
+   （button 不继承字体）。
+   ⚠️ 改上面那条的字号 / 字体时，这里要跟着改，否则会小一号。
+   可惜之处：原来的 mailto: 链接没了。但「点一下复制」比「唤起本地邮件
+   客户端」更贴近这个页面的实际用法，而两者不能共存（点一下只能干一件事）。
+   -------------------------------------------------------------------------- */
+
+/* 整宽命中区：不只那串字能点，整行都能点（触屏友好）。 */
+.contact-item__value--copy {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 17px/1.5 var(--font-heading);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.28s var(--ease-out);
+}
+
+.contact-item__value--copy:hover { color: var(--accent); }
+
+/* 成功态（约 2.4s 后由 js/main.js 自己撤掉）。
+   这行没有别的文案可以改成「已复制」（改了就看不出这是邮箱 / 微信号了），
+   所以眼睛能看到的反馈只有颜色 + 一条下划线；读屏那边另有 role="status" 播报。 */
+.contact-item__value--copy.is-done {
+  color: var(--success);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--success-rgb), 0.55);
+  text-underline-offset: 4px;
+}
+
+/* 卡片底部那句小字（小红书：好奇 AI 的……；信箱：长一点的事情……；微信：加我的时候……） */
+.contact-item__note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ----------------------------------------------------------------------------
+   小红书那行：唯一一条真的外链（<a href>，新标签页打开）。
+   它和上面 .contact-item__value--copy 的区别只在「点了干什么」，长得一模一样，
+   所以字体不用再写一遍（<a> 会继承 .contact-item__value 的 font）。
+   末端的 → 是个「点得动」的提示，aria-hidden 所以读屏只会读到标题本身。
+   -------------------------------------------------------------------------- */
+
+/* 整宽命中区：和复制那两行一致，不只那串字能点，整行都能点。 */
+.contact-item__value--link {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.28s var(--ease-out);
+}
+
+.contact-item__value--link:hover,
+.contact-item__value--link:focus-visible { color: var(--accent); }
+
+.contact-item__arrow {
+  display: inline-block;
+  margin-left: 0.35em;
+  transition: transform 0.28s var(--ease-out);
+}
+
+/* 只是往右推一点点，比整只箭头平移克制得多 */
+.contact-item__value--link:hover .contact-item__arrow,
+.contact-item__value--link:focus-visible .contact-item__arrow {
+  transform: translateX(4px);
+}
+
+
+/* ============================================================================
+   3. 首页 · 头像圆盘
+   ========================================================================== */
+
+/* 首页右栏竖着排：上面是头像圆盘，下面是那行小字说明 */
+.hero__aside {
+  flex-direction: column;
+  gap: 20px;
+}
+
+.avatar-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(var(--accent-rgb), 0.16), transparent 62%),
+    var(--surface);
+  overflow: hidden;
+}
+
+/*
+  外圈呼吸光晕；keyframes 复用 animations.css 里已有的 doorBreath（同样只是透明度呼吸）。
+  z-index:2 —— 圆盘里现在是铺满整张的图片（z-index:1），不加这层就会被图片压住，
+  那圈会呼吸的细边就看不见了。
+*/
+.avatar-card__halo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.22);
+  animation: doorBreath 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/*
+  圆盘里那张图（根目录 avatar.jpg，800×800 正方形）：铺满整个圆盘，多出来的边角裁掉。
+  图本身是正方形，cover 只会裁掉四个角，人物（左下）和塔心那束光都完整留在圆内。
+  不用写 border-radius：父级 .avatar-card 已经 overflow:hidden + border-radius:50%。
+  用绝对定位而不是 width/height:100%，是为了不依赖 grid 的 .avatar-card 尺寸解析。
+  z-index:1 让它的叠放顺序和当初的剪影一致，外圈的 .avatar-card__halo 仍在最上层呼吸。
+*/
+.avatar-card__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-card__cap {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+

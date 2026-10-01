@@ -1,0 +1,272 @@
+/* ============================================================================
+   layout.css — 容器、分区、网格、氛围背景层
+   来源：DESIGN.md §5 Layout Principles
+   ========================================================================== */
+
+/* ============================================================================
+   1. 氛围背景层（纯 CSS 极光 + 点阵，无 canvas / WebGL）
+   固定在最底层，z-index:-1，pointer-events:none
+   ========================================================================== */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  /* 移动端默认更收敛 */
+  opacity: 0.6;
+}
+
+/* 极光：3 层 radial-gradient，各自缓慢漂移 */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  will-change: transform;
+}
+
+.aurora__layer {
+  position: absolute;
+  border-radius: 50%;
+  /* 不移动的元素才允许 blur；这里用大半径 radial-gradient 模拟柔光，避免 filter */
+}
+
+.aurora__layer--a {
+  width: 70vw;
+  height: 70vw;
+  top: -18vw;
+  left: -12vw;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--accent-rgb), 0.20), transparent 62%);
+  animation: auroraDriftA 26s ease-in-out infinite alternate;
+}
+
+.aurora__layer--b {
+  width: 62vw;
+  height: 62vw;
+  top: 22vh;
+  right: -16vw;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--accent-2-rgb), 0.20), transparent 62%);
+  animation: auroraDriftB 32s ease-in-out infinite alternate;
+}
+
+.aurora__layer--c {
+  width: 80vw;
+  height: 80vw;
+  bottom: -30vw;
+  left: 18vw;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--c-dora-rgb), 0.12), transparent 65%);
+  animation: auroraDriftC 38s ease-in-out infinite alternate;
+}
+
+/* 点阵：1px 网格，缓慢漂移；移动端隐藏 */
+.dotgrid {
+  position: absolute;
+  inset: -50px;
+  background-image: radial-gradient(rgba(var(--surface-rgb), 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  animation: dotDrift 40s linear infinite;
+  will-change: transform;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 20%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 20%, transparent 78%);
+}
+
+/* 顶部渐隐，让内容与背景过渡自然 */
+.ambient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(var(--bg-rgb), 0) 0%, rgba(var(--bg-rgb), 0) 60%, rgba(var(--bg-rgb), 0.85) 100%);
+}
+
+/* ============================================================================
+   2. 容器
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 32px;
+}
+
+/* 窄容器：长文阅读区（720px，中文最佳行长 ~ 40 字） */
+.container--narrow {
+  max-width: 720px;
+}
+
+/* ============================================================================
+   3. 分区（Section）
+   ========================================================================== */
+
+.section {
+  position: relative;
+  padding-block: 120px;
+}
+
+/*
+ * 交替底色的 section（目前用在 #brief 身份档案）。
+ *
+ * 为什么不直接 background: var(--surface-alt)？
+ *   因为 .ambient（极光 + 点阵）是 fixed + z-index:-1 的整体背景。
+ *   一旦某个 section 铺上不透明底色，它就会把极光整块挡住 ——
+ *   滚到这一屏时，背景光晕会「啪」地断掉，屏与屏之间出现一条横贯全屏的硬边。
+ * 所以这里改用同色系的半透明渐变：中间是不透明的交替底色，上下各自淡出，
+ * 让它跟主背景平滑衔接，极光也能从两端继续透出来。
+ */
+.section--alt {
+  background-image: linear-gradient(
+    180deg,
+    rgba(var(--surface-alt-rgb), 0) 0%,
+    rgba(var(--surface-alt-rgb), 0.92) 14%,
+    rgba(var(--surface-alt-rgb), 0.92) 86%,
+    rgba(var(--surface-alt-rgb), 0) 100%
+  );
+}
+
+/*
+  每个关卡区块的最小高度，保证"滚一屏 = 过一关"的节奏。
+  ⚠️ 这里的两行在桌面（≥901px）会被 responsive.css §1.5 的「一屏一关」规则盖掉：
+     那里把 section 改成 flex 竖排 + 垂直居中 + min-height:100svh，
+     正文够短时就正好一屏、不出现上下滑动。改这里的数值请连那边一起看。
+*/
+.section--level {
+  padding-block: 120px;
+}
+
+/* 区块头部：eyebrow → H2 → 发光短下划线 */
+.section__head {
+  margin-bottom: 56px;
+}
+
+.section__head .h2 {
+  margin-top: 12px;
+}
+
+/* Section 的 eyebrow 行：左文字 + 右角色徽章 */
+.eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   4. 关卡总览 Bento 网格（12 栏）
+   ========================================================================== */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: minmax(180px, auto);
+  gap: 20px;
+}
+
+/*
+ * 各卡片的跨度：制造"不等大"的节奏，绝不退化成等分网格。
+ *
+ * 【跨度必须每行加起来正好 12，否则会留下空洞】
+ * 第 1 行：大雄 6 + 静香 3 + 小夫 3 = 12
+ * 第 2 行：大雄（跨两行，继续占 6）+ 胖虎 6 = 12
+ * 第 3 行：哆啦A梦 5 + 任意门 7 = 12
+ * 改这里的数字时，请按上面三行重新加一遍，确保每行都等于 12。
+ */
+.bento__item--nobita  { grid-column: span 6; grid-row: span 2; }  /* 大雄：主角卡，跨两行，最大 */
+.bento__item--shizuka { grid-column: span 3; }
+.bento__item--suneo   { grid-column: span 3; }
+.bento__item--gian    { grid-column: span 6; }                    /* 胖虎：与上一行的大雄左右齐平 */
+.bento__item--dora    { grid-column: span 5; }                    /* 哆啦A梦 */
+.bento__item--door    { grid-column: span 7; }                    /* 任意门：收尾卡，比哆啦A梦略宽 */
+
+/* ============================================================================
+   5. 关卡双栏布局
+   左：巨型编号 + 标题；右：正文 / 卡片
+   ========================================================================== */
+
+.level {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 64px;
+  align-items: start;
+}
+
+.level__aside {
+  position: sticky;
+  top: 120px;
+  align-self: start;
+}
+
+.level__no {
+  font: 700 clamp(64px, 12vw, 140px)/1 var(--font-num);
+  letter-spacing: 0.02em;
+  /*
+    光学对齐：让左栏的墨迹顶端和右栏正文首行落在同一条水平线上。
+    巨型数字的字面本身比字号小一圈，line-height: 1 又在上下各留了半格行距，
+    于是它的「墨迹顶端」比右栏正文首行低约 10px（1440px 视口实测 367.5 vs 357.4）。
+      · 0.132em 数字墨迹顶端相对自己行盒顶端的偏移（随字号等比缩放）
+      · 8.4px   右栏正文 16px / 28.8 行高 首行墨迹顶端相对行盒顶端的偏移（固定值）
+    相减后把整个左栏往上提这么多。以后改数字字号不用重算，em 会跟着缩放；
+    单列布局那一段（responsive.css ≤900px）会把它归零。
+  */
+  margin-top: calc(8.4px - 0.132em);
+  /* 巨型编号允许渐变（DESIGN.md §3） */
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  opacity: 0.9;
+}
+
+.level__title {
+  margin-top: 8px;
+}
+
+.level__sub {
+  margin-top: 16px;
+}
+
+.level__body > * + * {
+  margin-top: 32px;
+}
+
+/* ============================================================================
+   6. 通用网格（时间线 / 记录卡 / 工具卡）
+   ========================================================================== */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* （原来这里还有个 .gadget / .gadget svg「关卡内的道具插画容器」，
+   内容现在一屏装得下，6 张道具大插画已经随正文尾部的删减一起下线，
+   没有元素再用这两个类，于是整块删除。存档 index-闯关版.html 里的
+   对应插画因此不再居中、也不再限高 280px。 */
+
+/* ============================================================================
+   7. 工具函数
+   ========================================================================== */
+
+.stack > * + * { margin-top: 24px; }
+.stack-sm > * + * { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.mt-5 { margin-top: 24px; }
+.mt-6 { margin-top: 32px; }
+.mt-7 { margin-top: 48px; }
+.mt-8 { margin-top: 64px; }
+
+.text-center { text-align: center; }
+
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}

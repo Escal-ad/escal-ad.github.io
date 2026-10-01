@@ -1,0 +1,315 @@
+/* ============================================================================
+   animations.css — keyframes + 入场状态
+   来源：DESIGN.md §7 Animation & Interaction
+   原则：一切位移只用 opacity + transform，只用光、不动布局；
+        滚动是唯一驱动器，所有入场只播一次。
+   ========================================================================== */
+
+/* ============================================================================
+   1. Keyframes
+   ========================================================================== */
+
+/* 通用上浮入场 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* 身份卡扫描线：从上到下扫过一遍 */
+@keyframes scanPass {
+  0%   { top: 0;     opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* 点击火花：沿 --dx / --dy 向外扩散并淡出 */
+@keyframes sparkOut {
+  0% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--dx)), calc(-50% + var(--dy)), 0) scale(0.35);
+  }
+}
+
+/* 极光漂移（3 层各自不同节奏，避免同步） */
+@keyframes auroraDriftA {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(6vw, 5vh, 0) scale(1.12); }
+}
+
+@keyframes auroraDriftB {
+  from { transform: translate3d(0, 0, 0) scale(1.08); }
+  to   { transform: translate3d(-7vw, -4vh, 0) scale(1); }
+}
+
+@keyframes auroraDriftC {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-5vw, -6vh, 0) scale(1.15); }
+}
+
+/* 点阵缓慢平移（图案周期 28px，位移必须是 28 的整数倍才能无缝循环） */
+@keyframes dotDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(28px, 28px, 0); }
+}
+
+/* 光晕呼吸：透明度在 0.75 和 1 之间来回，给静态的光晕一点活气。
+   现在用在两个地方：首页头像外圈的光环（.avatar-card__halo）、
+   已经"通关"的标签（.badge--cleared）。 */
+@keyframes doorBreath {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+/* ---------- 站标上那颗铃铛（见 js/bell.js） ---------- */
+
+/* 摇一下：右左摆动，摆幅一路衰减回正中 */
+@keyframes bellSwing {
+  0%   { transform: rotate(0deg); }
+  12%  { transform: rotate(16deg); }
+  28%  { transform: rotate(-13deg); }
+  44%  { transform: rotate(9deg); }
+  60%  { transform: rotate(-6deg); }
+  76%  { transform: rotate(3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* 敲响时从铃铛位置荡开的一圈波纹 */
+@keyframes bellRipple {
+  0%   { opacity: 0.55; transform: scale(0.6); }
+  100% { opacity: 0;    transform: scale(2.2); }
+}
+
+/* 徽章／进度条上的光带缓慢流动 */
+@keyframes sheen {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+
+/* ============================================================================
+   2. 入场状态：.reveal（普通上浮）
+   由 IntersectionObserver 加 .in-view 触发，只播一次
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 0.7s var(--ease-out),
+    transform 0.7s var(--ease-out);
+  will-change: opacity, transform;
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  will-change: auto;
+}
+
+/* ============================================================================
+   3. 入场状态：.reveal-scale（缩放 + 轻微回弹）
+   ========================================================================== */
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-pop);   /* 带一点 overshoot */
+  will-change: opacity, transform;
+}
+
+.reveal-scale.in-view {
+  opacity: 1;
+  transform: scale(1);
+  will-change: auto;
+}
+
+/* ============================================================================
+   4. 错峰入场：.stagger-reveal 的子元素依次上浮
+   transitionDelay 由 JS 写入（min(i * 0.1s, 0.6s)）
+   ========================================================================== */
+
+.stagger-reveal > * {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-out);
+}
+
+.stagger-reveal.in-view > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ============================================================================
+   5. Hero 逐字升起（SplitText 手写版）
+   三层结构：.char-unit（遮罩）→ .char-move（位移）→ .char（字形／渐变）
+   ⚠️ background-clip:text 在有 transform 的后代上会失效，
+      所以渐变必须留在不动的 .char 上，位移交给 .char-move。
+   ========================================================================== */
+
+.hero__h1,
+.section__head .h2 {
+  /* 逐字排布：不换行内断开，靠 .char-unit 做遮罩 */
+  display: block;
+}
+
+.char-unit {
+  display: inline-block;
+  overflow: hidden;          /* 遮罩：把升起的字挡住 */
+  vertical-align: bottom;
+  /* 给下伸部（如"口"字的勾）留一点空间，避免被裁掉 */
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+
+.char-move {
+  display: inline-block;
+  transform: translate3d(0, 100%, 0);
+  transition: transform 0.85s var(--ease-out);
+  transition-delay: var(--d, 0ms);
+  will-change: transform;
+}
+
+.char {
+  display: inline-block;
+  /* 渐变写在这里：它自己不做位移，所以 background-clip 不会失效 */
+}
+
+/* H2 浮入：位移更小（28px → 20px），观感更克制 */
+.h2 .char-move {
+  transform: translate3d(0, 28px, 0);
+  opacity: 0;
+  transition:
+    transform 0.7s var(--ease-out),
+    opacity 0.7s var(--ease-out);
+  transition-delay: var(--d, 0ms);
+}
+
+/* 触发：Hero 加 .is-ready，H2 加 .in-view */
+.hero.is-ready .char-move,
+.section__head .h2.in-view .char-move {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+
+/* Hero 关键词的连续渐变
+   关键一：渐变不能加在 <em> 上，因为 <em> 内部每个字都被拆成
+   .char-unit > .char-move > .char，.char-move 上带了 transform，
+   会让 background-clip:text 失效（文字直接消失）。所以渐变写在最内层、
+   不做位移的 .char 上。
+   关键二：background 里的百分比 stop 是相对「这个元素自己的盒子」算的，
+   所以不能把「在 em 里占第几个字」的百分比直接当 stop 用（那样方向会反过来）。
+   正确做法是：把整条渐变按 em 的宽度撑开（--grad-w），再往左挪到
+   这个字的起跑位置（--grad-x 取负值），等于给每个字开了同一扇窗。
+   这两个变量由 js/reveal.js 的 measureGradient() 在排版稳定后写入，
+   默认值 100% / 0px 保证 JS 没跑起来时也只是退化成整字同色。 */
+.hero__h1 em {
+  font-style: normal;
+}
+
+.hero__h1 em .char {
+  background-image: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background-size: var(--grad-w, 100%) 100%;
+  background-position: var(--grad-x, 0px) 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ============================================================================
+   6. 发光短下划线（H2 下方的层次线）
+   ========================================================================== */
+
+.h2-rule {
+  display: block;
+  width: 64px;
+  height: 1px;
+  margin-top: 20px;
+  background: var(--grad-glow);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.5);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.7s var(--ease-out);
+}
+
+.section__head.in-view .h2-rule,
+.h2-rule.in-view {
+  transform: scaleX(1);
+}
+
+/* ============================================================================
+   7. 身份卡扫描线
+   ========================================================================== */
+
+.file-card__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--grad-glow);
+  box-shadow: 0 0 24px 6px rgba(var(--accent-rgb), 0.35);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 卡片进入视口时扫一遍（只播一次） */
+.file-card.in-view .file-card__scan {
+  animation: scanPass 1.1s cubic-bezier(0.45, 0, 0.55, 1) 0.15s 1 both;
+}
+
+/* ============================================================================
+   8. 点击火花 + 拖动光痕
+   火花：由 JS 动态创建 6 个 .spark，animationend 后自动移除
+   光痕：由 effects.js 的 initDragTrail 动态创建的一块 .drag-trail 画布
+   ========================================================================== */
+
+.spark {
+  position: fixed;
+  z-index: var(--z-spark);
+  width: 4px;
+  height: 4px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px 2px rgba(var(--accent-rgb), 0.7);
+  pointer-events: none;
+  animation: sparkOut 0.62s var(--ease-out) forwards;
+}
+
+/* 拖动光痕：一块透明的全屏 canvas，永远不吃点击。
+   颜色不写在这里 —— 光痕的颜色由 JS 从当前页的 --char-rgb 上读，
+   跟卡片 / 徽章共用同一个变量，所以本文件不需要产生新的颜色字面值。 */
+.drag-trail {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-trail);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   9. 关卡卡片 / 身份卡的进入态（配合 .reveal / .reveal-scale 使用）
+   ========================================================================== */
+
+/* 卡片 hover 的抬升与光效统一交给 components.css，这里只补"进入后"的收尾 */
+.level-card.in-view,
+.file-card.in-view,
+.door.in-view {
+  will-change: auto;
+}
+
+/* 已通关徽章的轻微发光呼吸 */
+.badge--cleared {
+  animation: doorBreath 3.6s ease-in-out infinite;
+}

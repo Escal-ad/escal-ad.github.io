@@ -1,0 +1,367 @@
+<!doctype html>
+<!--
+  ============================================================================
+  story.html — 我的故事
+  ----------------------------------------------------------------------------
+  这是「首页 + 6 个子页面」结构里的一个子页面，双击就能打开。
+
+  本页内容：我的故事 这一篇，原始正文是从 index-闯关版.html 里原样搬过来的。
+
+  全站 7 个文件共用同一套外壳（导航、底部菜单、脚本），
+  所以改导航时，7 个文件都要改一遍。
+  当前页面的导航高亮靠导航 / 底部菜单里那条 aria-current="page" 认出来，别删。
+
+  样式在 css/ 的 6 个文件里，交互在 js/ 的 7 个文件里，加载顺序都不能改。
+  所有插画都是自己画的 inline SVG，不下载、不嵌入任何官方图片。
+  ============================================================================
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <!-- 浏览器地址栏 / 移动端顶栏的颜色，与 --bg 保持一致 -->
+    <meta name="theme-color" content="#070c1a" />
+
+    <title>01 我的故事 · 千年万亿大人</title>
+    <meta name="description" content="我的故事 —— 从法学四年到决定往 AI 方向探索，这一篇讲我是怎么走到今天的。" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="01 我的故事 · 千年万亿大人" />
+    <meta property="og:description" content="我的故事 —— 从法学四年到决定往 AI 方向探索，这一篇讲我是怎么走到今天的。" />
+    <meta property="og:url" content="https://escal-ad.github.io/story.html" />
+    <link rel="canonical" href="https://escal-ad.github.io/story.html" />
+
+    <!--
+      分享封面：别人把链接发到微信 / 群里时，聊天框里那张小卡片上的图就是它。
+      ⚠️ 微信 / 小红书 / 微博抓取卡片时**不认相对路径**，所以这里必须是绝对地址。
+      地址来自本文件顶部的 SITE_URL 常量 —— 换域名只改那一行，重跑脚本即可。
+    -->
+    <meta property="og:image" content="https://escal-ad.github.io/og-image.png" />
+    <meta property="og:image:alt" content="01 我的故事 · 千年万亿大人" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="01 我的故事 · 千年万亿大人" />
+    <meta name="twitter:description" content="我的故事 —— 从法学四年到决定往 AI 方向探索，这一篇讲我是怎么走到今天的。" />
+    <meta name="twitter:image" content="https://escal-ad.github.io/og-image.png" />
+
+    <!-- 自己画的图标（内联 SVG，不额外产生文件请求） -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070c1a'/%3E%3Cpath d='M12 40a20 20 0 0 1 40 0v4a6 6 0 0 1-6 6H18a6 6 0 0 1-6-6z' fill='%23f0f4fa'/%3E%3C/svg%3E"
+    />
+
+    <!--
+      字体：Google Fonts 首次访问需要联网。断网时浏览器会回退到系统字体，
+      页面依然可读（tokens.css 里每一组 font-family 都写了中文兜底字体）。
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- 样式：加载顺序有意义，请不要调换
+         tokens   色值 / 字体 / 间距 / 圆角（全站唯一出现颜色字面值的地方）
+         layout   容器、分区、网格、氛围背景
+         components  导航、卡片、按钮等具体零件
+         pages    多页面外壳（当前页高亮、面包屑、翻页、首页头像）
+         animations  关键帧
+         responsive  各屏幕断点的覆盖（必须最后）
+    -->
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+
+    <!-- Motion effects derived from vue-bits (https://github.com/DavidHDev/vue-bits) by DavidHDev (MIT) -->
+  </head>
+
+  <body data-sfx="time-machine">
+    <!-- ======================================================================
+         插画精灵图（sprite）：自绘的 SVG 只在这里写一次，正文里用 <use> 复用。
+         ⚠️ <use> 只能在同一个文档内生效，所以每个页面都要带一份自己用得到的。
+         颜色一律用 CSS 变量 + fill-opacity，全站没有硬编码色值，换主题时插画自动跟着变。
+         ====================================================================== -->
+    <svg
+      width="0"
+      height="0"
+      style="position: absolute; overflow: hidden"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <!-- 四次元口袋（站标） -->
+      <symbol id="art-hero-pocket" viewBox="0 0 200 200">
+        <circle
+          cx="100" cy="100" r="92"
+          fill="var(--accent)" fill-opacity="0.07"
+          stroke="var(--accent)" stroke-opacity="0.42" stroke-width="1.5"
+        />
+        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--text)" stroke-opacity="0.10" />
+        <!-- 口袋本体：上圆下方 -->
+        <path
+          d="M44 110a56 56 0 0 1 112 0v28a16 16 0 0 1-16 16H60a16 16 0 0 1-16-16z"
+          fill="var(--text)" fill-opacity="0.9"
+        />
+        <path d="M44 110a56 56 0 0 1 112 0z" fill="var(--bg)" fill-opacity="0.32" />
+        <path
+          d="M64 130h72" stroke="var(--bg)" stroke-opacity="0.26"
+          stroke-width="3" stroke-linecap="round"
+        />
+        <!-- 脖子上那颗铃铛：一个抽象致意，不是任何官方形象 -->
+        <circle cx="100" cy="52" r="11" fill="var(--c-bell)" fill-opacity="0.95" />
+        <path
+          d="M100 41v-9M91 63l-6 6M109 63l6 6"
+          stroke="var(--c-bell)" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round"
+        />
+      </symbol>
+    </svg>
+
+    <!-- 跳转链接：键盘用户按 Tab 第一个看到的东西 -->
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <!-- 顶部阅读进度条（由 js/scroll.js 控制 scaleX）
+         首页只有一屏，没什么可滚的，所以只有子页面才放这个 -->
+    <div class="progress-bar" aria-hidden="true"></div>
+
+    <!-- 背景氛围层：纯 CSS 极光 + 点阵，不看也不会影响阅读 -->
+    <div class="ambient" aria-hidden="true">
+      <div class="aurora">
+        <span class="aurora__layer aurora__layer--a"></span>
+        <span class="aurora__layer aurora__layer--b"></span>
+        <span class="aurora__layer aurora__layer--c"></span>
+      </div>
+      <span class="dotgrid"></span>
+    </div>
+
+    <!-- ======================================================================
+         顶部导航：6 个人物各对应一个子页面。
+         当前页面的那条链接在 HTML 里写死了 class="is-current" aria-current="page"，
+         高亮样式在 css/pages.css 第 1 节。
+         ====================================================================== -->
+    <header class="nav">
+      <div class="nav__inner">
+        <!--
+          站标（口袋里那颗黄铃铛）就是全站唯一的「铃铛」：
+          点它会摇一摇 + 响一声（见 js/bell.js），但它同时仍然是「回首页」的链接。
+          下面那个空 span 只是波纹道具，样式在 css/components.css 的「2. 导航」节。
+        -->
+        <a class="nav__logo" href="index.html">
+          <span class="nav__ring" aria-hidden="true"></span>
+          <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#art-hero-pocket" /></svg>
+          <span>千年万亿大人</span>
+        </a>
+
+        <nav class="nav__links" aria-label="页面导航">
+          <a class="nav__link is-current" href="story.html" data-sfx="time-machine"
+            aria-current="page"><span class="mono">01</span>我的故事</a>
+          <a class="nav__link" href="life.html" data-sfx="memory-bread"><span class="mono">02</span>喜好与生活</a>
+          <a class="nav__link" href="skills.html" data-sfx="takecopter"><span class="mono">03</span>技能与追求</a>
+          <a class="nav__link" href="turning.html" data-sfx="shrink-light"><span class="mono">04</span>挫折与转折</a>
+          <a class="nav__link" href="tools.html" data-sfx="translation-jelly"><span class="mono">05</span>工具与方法</a>
+          <a class="nav__link" href="contact.html" data-sfx="anywhere-door"><span class="mono">06</span>联系方式</a>
+        </nav>
+
+        <!--
+          导航右上角原来有一个「小红书」按钮（class="btn btn--ghost nav__cta"），
+          2026-09-30 按需求删掉了：全站顶部不再有小红书跳转。
+          想恢复就把它放回 </nav> 和下面 <button class="nav__sfx"> 之间，
+          并在下面 fill(NAV, ...) 那一行补回 XHS=XHS。
+          样式 .nav__cta 在 css/components.css（现在只剩一条说明注释）。
+        -->
+
+        <!--
+          右上角的小喇叭（2026-10-01 新增）：点一下静音 / 取消静音，图标跟着换成
+          「带斜杠的喇叭」，选择记在 localStorage（键 wqxw-sfx）。
+          逻辑在 js/sfx.js 的 initToggle／paintToggle，样式在 css/components.css「2. 导航」。
+          它站在原小红书按钮腾出来的位置上；它不在 .nav__links 里，所以 ≤900px 那一档
+          要靠 CSS 给它 margin-left:auto，否则会挤到汉堡左边（顺序要 站标·喇叭·汉堡）。
+          aria-pressed / aria-label / title 的初始值跟「音效开着」一致，
+          js/sfx.js 启动时会按 localStorage 再刷一遍。
+        -->
+        <button
+          class="nav__sfx"
+          type="button"
+          aria-pressed="true"
+          aria-label="关闭页面音效"
+          title="关闭页面音效"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11.4 4.8 6.9 8.4H3.6v7.2h3.3l4.5 3.6z" fill="currentColor" />
+            <path
+              class="nav__sfx-wave"
+              d="M14.9 9.4a3.7 3.7 0 0 1 0 5.2M17.6 6.8a7.4 7.4 0 0 1 0 10.4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              class="nav__sfx-slash"
+              d="M14.1 9.1 20.5 15.5"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+
+        <button
+          class="nav__toggle"
+          type="button"
+          aria-controls="mobile-menu"
+          aria-expanded="false"
+          aria-label="打开页面菜单"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 移动端全屏菜单（≤900px 时替换掉 .nav__links）
+         tabindex="-1" 只是为了「一个条目都没有」时能当焦点兜底，
+         真正的键盘行为（进焦点 / 锁焦点 / 背景 inert / 退出还焦点）在 js/scroll.js 的
+         initMobileMenu 里，见那段注释。 -->
+    <nav class="mobile-menu" id="mobile-menu" tabindex="-1" aria-hidden="true" aria-label="页面菜单">
+      <a
+        class="mobile-menu__item is-current"
+        href="story.html"
+        data-sfx="time-machine"
+        style="--char: var(--c-nobita); --char-rgb: var(--c-nobita-rgb)"
+        aria-current="page"
+        ><span class="mono">01</span>我的故事</a
+      >
+      <a
+        class="mobile-menu__item"
+        href="life.html"
+        data-sfx="memory-bread"
+        style="--char: var(--c-shizuka); --char-rgb: var(--c-shizuka-rgb)"
+        ><span class="mono">02</span>喜好与生活</a
+      >
+      <a
+        class="mobile-menu__item"
+        href="skills.html"
+        data-sfx="takecopter"
+        style="--char: var(--c-suneo); --char-rgb: var(--c-suneo-rgb)"
+        ><span class="mono">03</span>技能与追求</a
+      >
+      <a
+        class="mobile-menu__item"
+        href="turning.html"
+        data-sfx="shrink-light"
+        style="--char: var(--c-gian); --char-rgb: var(--c-gian-rgb)"
+        ><span class="mono">04</span>挫折与转折</a
+      >
+      <a
+        class="mobile-menu__item"
+        href="tools.html"
+        data-sfx="translation-jelly"
+        style="--char: var(--c-dora); --char-rgb: var(--c-dora-rgb)"
+        ><span class="mono">05</span>工具与方法</a
+      >
+      <a
+        class="mobile-menu__item"
+        href="contact.html"
+        data-sfx="anywhere-door"
+        style="--char: var(--c-door); --char-rgb: var(--c-door-rgb)"
+        ><span class="mono">06</span>联系方式</a
+      >
+    </nav>
+
+    <!--
+      正文：我的故事
+      这一整段是从旧的 index-闯关版.html 里原样搬来的，只把「闯关」相关的说法改了措辞。
+    -->
+    <main id="main">
+<section
+        class="section section--level"
+        id="page-top"
+        style="--char: var(--c-nobita); --char-rgb: var(--c-nobita-rgb)"
+      >
+        <div class="container">
+          <div class="section__head">
+            <div class="eyebrow-row">
+              <span class="eyebrow" data-scramble>道具档案 // 0x01</span>
+              <span class="badge badge--char">时光机</span>
+            </div>
+            <h1 class="h2">我的故事</h1>
+            <span class="h2-rule" aria-hidden="true"></span>
+          </div>
+
+          <div class="level">
+            <div class="level__aside">
+              <div class="level__no" aria-hidden="true">01</div>
+              <p class="level__title">时光机</p>
+              <p class="level__sub mono">第 01 篇 · 共 6 篇</p>
+            </div>
+
+            <div class="level__body">
+              <div class="prose">
+                <p>
+                  我在大学念的是法学。四年里学到最多的不是背下多少法条，
+                  而是<strong>问题感、判断力、纠错系统</strong>。
+                </p>
+                <p>
+                  毕业的时候我想明白一件事：我想要的不只是一条已经画好的路线。
+                  所以这份档案里没有「履历」，只有一条不断更新的时间线。
+                </p>
+              </div>
+
+              <!-- 时间线：真实日期/里程碑由你本人补充，我不替你写 -->
+              <ol class="timeline">
+                <li class="timeline__item">
+                  <p class="timeline__date mono">2022</p>
+                  <h3 class="timeline__title">走进法学院</h3>
+                  <p class="timeline__desc">
+                    当时我以为人生会是一条直线：读书、考试、执业。后来发现直线也可以拐弯。
+                  </p>
+                </li>
+                <li class="timeline__item">
+                  <p class="timeline__date mono">2026</p>
+                  <h3 class="timeline__title">毕业</h3>
+                  <p class="timeline__desc">四年读完，我拿到的除了文凭，还有一次重新选择的机会。</p>
+                </li>
+                <li class="timeline__item">
+                  <p class="timeline__date mono">现在</p>
+                  <h3 class="timeline__title">在路上</h3>
+                  <p class="timeline__desc">
+                    在学AI，努力探索法律+AI方向，探索新可能。
+                  </p>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!--
+      脚本：加载顺序有意义（utils 定义 APP，其余挂到 APP 上，main 最后启动）。
+         bell 排在 utils 之后（要用 APP.flags）、main 之前（main 要调它）。
+         sfx 同理：utils → sfx（要用 APP.$、APP.initSfx）→ main 启动它，
+         位置就在 bell 后面，两个发声模块互不依赖。
+         wheel 紧跟 scroll：两个都是"跟着滚动 / 滚轮走"的模块，
+         它自己会在首页自动不启用（首页没有 .is-current 那条链接）。
+      ⚠️ 这里没有 drawer.js：四次元口袋抽屉是旧版闯关玩法的彩蛋，已经随玩法下线，
+         文件还留在 js/ 里，想恢复就把它加回下面的列表，并在页面里补 .drawer 结构。
+    -->
+    <script src="js/utils.js" defer></script>
+    <script src="js/reveal.js" defer></script>
+    <script src="js/scroll.js" defer></script>
+    <script src="js/wheel.js" defer></script>
+    <script src="js/effects.js" defer></script>
+    <script src="js/bell.js" defer></script>
+    <script src="js/sfx.js" defer></script>
+    <script src="js/main.js" defer></script>
+  </body>
+</html>

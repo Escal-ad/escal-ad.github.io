@@ -1,0 +1,1528 @@
+/* ============================================================================
+   components.css — 按钮、导航、卡片、抽屉、进度条、关卡轨道、页脚
+   来源：DESIGN.md §4 Component Stylings / §6 Depth & Elevation
+   纪律：本文件不允许出现任何颜色字面值，只能用 tokens.css 的变量。
+   ========================================================================== */
+
+/* ============================================================================
+   1. 按钮
+   ========================================================================== */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 30px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font: 500 15px/1 var(--font-heading);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out),
+    filter 0.3s var(--ease-out),
+    color 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out),
+    background 0.3s var(--ease-out);
+}
+
+/* ---- 主 CTA：唯一允许大面积渐变的地方之一 ----
+   用 --grad-cta（不是 --grad-accent）作底，文字用近黑的 --bg。
+   原因见 tokens.css 里 --grad-cta 的注释：原来的「--grad-accent + 白字」
+   白字在青端只有 1.77:1、紫端 3.84:1，整条渐变都不满足 AA 的 4.5:1。
+   换成「亮渐变 + 近黑字」后，整条渐变上是 4.80:1 ~ 5.46:1，
+   而且按钮相对页面底色的对比度也从 2.35:1 提到 4.80:1（紫端）。 */
+.btn--primary {
+  background: var(--grad-cta);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(var(--bg-rgb), 0.6);
+}
+
+/* GlareHover：100° 光带横扫 */
+.btn--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(var(--surface-rgb), 0.42) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.75s var(--ease-out);
+  pointer-events: none;
+}
+
+.btn--primary:hover::after,
+.btn--primary:focus-visible::after {
+  transform: translateX(130%);
+}
+
+.btn--primary:hover,
+.btn--primary:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 32px rgba(var(--accent-rgb), 0.35),
+    0 12px 28px rgba(var(--shadow-rgb), 0.45);
+}
+
+.btn--primary:active { transform: scale(0.97); }
+
+.btn--primary:disabled,
+.btn--primary[aria-disabled='true'] {
+  opacity: 0.4;
+  filter: saturate(0.3);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---- 次级按钮 ---- */
+.btn--ghost {
+  min-height: 44px;
+  padding: 0 22px;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  color: var(--text);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.14);
+}
+
+.btn--ghost:active { transform: scale(0.97); }
+
+/* ---- 图标按钮（44×44，触碰友好） ---- */
+.btn--icon {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn--icon:hover,
+.btn--icon:focus-visible {
+  color: var(--accent);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+/* 按钮内的箭头图标 */
+.btn__arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.btn:hover .btn__arrow { transform: translateX(3px); }
+
+/* ============================================================================
+   2. 导航
+   ========================================================================== */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  height: 72px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    height 0.35s var(--ease-out),
+    background 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out);
+}
+
+/* 滚动后：变矮 + 毛玻璃 */
+.nav.scrolled {
+  height: 64px;
+  background: rgba(var(--bg-rgb), 0.82);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-bottom-color: var(--border);
+}
+
+.nav__inner {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 站标（口袋里那颗黄铃铛）就是全站唯一的"铃铛"：点一下会摇一摇 + 响一声，
+   见 js/bell.js。它同时仍然是"回首页"的链接，所以这里只加动画，不动它的布局。 */
+
+/* 敲响时从图标位置荡开的一圈波纹 */
+.nav__ring {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 26px;             /* 和 .nav__logo svg 一样大，正好套住那颗铃铛 */
+  height: 26px;
+  margin-top: -13px;       /* 垂直居中：不用 transform，留给波纹的 scale */
+  border-radius: 50%;
+  border: 1px solid rgba(var(--accent-rgb), 0.7);
+  opacity: 0;
+  pointer-events: none;    /* 别挡住站标自己的点击 */
+}
+
+/* ---------- 敲响：站标摆一摆，波纹荡开 ---------- */
+
+.nav__logo.is-ring svg {
+  animation: bellSwing 720ms var(--ease-out) both;
+}
+
+.nav__logo.is-ring .nav__ring {
+  animation: bellRipple 640ms var(--ease-out) both;
+}
+
+.nav__logo {
+  position: relative;      /* 波纹以站标图标为参照绝对定位 */
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font: 700 15px/1 var(--font-heading);
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.nav__logo svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  transition: transform 0.5s var(--ease-out);
+  /* 转轴落在精灵图里那颗铃铛的圆心（y = 52/200 ≈ 26%）：看着就是铃铛挂着、下面在晃 */
+  transform-origin: 50% 26%;
+}
+
+.nav__logo:hover svg { transform: rotate(12deg); }
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font: 400 14px/1 var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  transition:
+    color 0.28s var(--ease-out),
+    background 0.28s var(--ease-out);
+}
+
+.nav__link:hover { color: var(--text); }
+
+.nav__link.is-active {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.10);
+}
+
+/* 导航里的序号 */
+.nav__link .mono {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.nav__link.is-active .mono { color: var(--accent); }
+
+/*
+  .nav__cta —— 已下线（2026-09-30）
+  导航右上角原来是一个「小红书」跳转按钮（.btn.btn--ghost），
+  现在全站顶部不再有小红书入口，按钮和它的样式一起删掉了。
+  `.nav__links` 自带 margin-left:auto，导航右侧仍然贴右对齐，布局不需要改。
+
+  这个位置后来由下面的 .nav__sfx（页面音效开关，2026-10-01 新增）接管；
+  当前 navbar 的横向顺序是：站标 · 导航链接 · 喇叭 ·（≤900px 换成汉堡）。
+*/
+
+/* ----------------------------------------------------------------------------
+   页面音效开关（小喇叭）
+   尺寸、圆角、底色都把 .btn--icon / .nav__toggle 那套抄过来，
+   这样它和旁边的导航链接、汉堡按钮看起来是同一个零件。
+   两个图标状态都在同一张 svg 里，靠 .is-off 切换透明度 ——
+   不换 svg、不动尺寸，所以点它的时候布局不会跳。
+   逻辑在 js/sfx.js 的 initToggle／paintToggle。
+   ---------------------------------------------------------------------------- */
+.nav__sfx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.28s var(--ease-out),
+    border-color 0.28s var(--ease-out),
+    background 0.28s var(--ease-out);
+}
+
+.nav__sfx svg { width: 20px; height: 20px; overflow: visible; }
+
+/* 声音波与那条斜杠共用一个淡入淡出，切换时不会有一帧两个图标都亮 */
+.nav__sfx-wave,
+.nav__sfx-slash {
+  transition: opacity 0.2s var(--ease-out);
+}
+
+.nav__sfx-wave { opacity: 1; }
+.nav__sfx-slash { opacity: 0; }
+
+.nav__sfx:hover,
+.nav__sfx:focus-visible {
+  color: var(--accent);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+/* 静音：整体变灰 + 换成带斜杠的喇叭 */
+.nav__sfx.is-off { color: var(--text-tertiary); }
+.nav__sfx.is-off .nav__sfx-wave { opacity: 0; }
+.nav__sfx.is-off .nav__sfx-slash { opacity: 1; }
+
+/* 汉堡按钮：≥901px 隐藏 */
+.nav__toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.nav__toggle svg { width: 20px; height: 20px; }
+
+/* ---- 移动端全屏菜单 ---- */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 96px 24px 48px;
+  background: rgba(var(--bg-rgb), 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px);
+  /* visibility 这里用「0s 延迟 0.3s」：它是离散属性，不能让它在 0.3s 里慢慢插值。
+     关闭时先让 opacity/transform 演完，再在最后一瞬间隐藏。
+     ⚠️ 打开时的反向规则在 .mobile-menu.is-open 里 —— 那里必须是 0s 0s，
+     否则刚打开的那一帧元素还是 visibility:hidden。
+     focus() 打到 hidden 元素上会被静默忽略，焦点就进不了菜单（读屏也就不知道菜单开了）。 */
+  transition:
+    opacity 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out),
+    visibility 0s 0.3s;
+}
+
+.mobile-menu.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  /* 打开：visibility 立即可见，不等动画 */
+  transition:
+    opacity 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out),
+    visibility 0s 0s;
+}
+
+/* 菜单容器本身带 tabindex="-1"，只作为「一个条目都没有」时的焦点兜底。
+   键盘打开菜单时 :focus-visible 会给整个全屏容器套一圈描边，看着像页面错位，
+   这里去掉 —— 正常路径下焦点一定落在第一个条目上，条目自己的描边照旧。 */
+.mobile-menu:focus,
+.mobile-menu:focus-visible { outline: none; }
+
+.mobile-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;          /* 触碰目标 ≥44px */
+  padding: 0 20px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  font: 700 18px/1 var(--font-heading);
+  color: var(--text);
+}
+
+.mobile-menu__item .mono {
+  font-size: 12px;
+  color: var(--char, var(--text-tertiary));
+}
+
+.mobile-menu__item.is-active,
+.mobile-menu__item:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* ============================================================================
+   3. 关卡卡片（Bento 单元 / SpotlightCard）
+   ========================================================================== */
+
+.level-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 260px;
+  padding: 32px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  transition:
+    transform 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+/* 每个卡片通过行内 --char / --char-rgb 覆盖角色色 */
+.level-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    320px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(var(--char-rgb, var(--accent-rgb)), 0.14),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+  pointer-events: none;
+}
+
+.level-card:hover::before,
+.level-card:focus-within::before { opacity: 1; }
+
+/* GlareHover：115° 光带 */
+.level-card::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  background: linear-gradient(
+    115deg,
+    transparent 42%,
+    rgba(var(--surface-rgb), 0.10) 50%,
+    transparent 58%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.9s var(--ease-out);
+  pointer-events: none;
+}
+
+.level-card:hover::after,
+.level-card:focus-within::after { transform: translateX(100%); }
+
+.level-card:hover,
+.level-card:focus-within {
+  transform: translateY(-4px);
+  border-color: rgba(var(--char-rgb, var(--accent-rgb)), 0.35);
+  box-shadow:
+    0 0 32px rgba(var(--char-rgb, var(--accent-rgb)), 0.12),
+    0 24px 48px rgba(var(--shadow-rgb), 0.45);
+}
+
+/* 卡片顶部：编号 + 徽章 */
+.level-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.level-card__no {
+  font: 700 clamp(40px, 5vw, 56px)/1 var(--font-num);
+  letter-spacing: 0.02em;
+  color: var(--char, var(--accent));
+  opacity: 0.85;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.level-card:hover .level-card__no { opacity: 1; }
+
+.level-card__title {
+  font: 700 clamp(20px, 2.2vw, 24px)/1.4 var(--font-heading);
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.level-card__desc {
+  font: 400 15px/1.8 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+/* 底部：角色 + 道具 */
+.level-card__char {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* 卡片内的迷你道具插画 */
+.level-card__art {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 64px;
+  height: 64px;
+  color: var(--char, var(--accent));
+  opacity: 0.42;
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.5s var(--ease-out);
+  pointer-events: none;
+}
+
+.level-card:hover .level-card__art {
+  opacity: 0.85;
+  transform: translateY(-4px) scale(1.06);
+}
+
+.level-card__art svg { width: 100%; height: 100%; overflow: visible; }
+
+/* 关卡卡片的链接覆盖层（整卡可点，但语义仍是 <a>） */
+.level-card__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* ============================================================================
+   4. 身份卡（TiltedCard + 扫描线）
+   ========================================================================== */
+
+.file-card {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  padding: 40px;
+  border-radius: var(--r-card-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    border-color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+.file-card:hover {
+  border-color: var(--border-hover);
+  box-shadow:
+    0 24px 60px rgba(var(--shadow-rgb), 0.55),
+    0 0 48px rgba(var(--accent-rgb), 0.10);
+}
+
+/* 卡片四角装饰（档案库的克制感） */
+.file-card__corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  pointer-events: none;
+}
+.file-card__corner--tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
+.file-card__corner--tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; }
+.file-card__corner--bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; }
+.file-card__corner--br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
+
+.file-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+/* 档案库的"指示灯"：一个小圆点 + 呼吸光 */
+.file-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 12px rgba(var(--success-rgb), 0.8);
+  animation: doorBreath 2.4s ease-in-out infinite;
+  flex: 0 0 auto;
+}
+
+.file-card__id {
+  margin-left: auto;
+}
+
+/* 头像槽位 */
+.file-card__avatar {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 auto;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--text-tertiary);
+}
+
+.file-card__avatar svg { width: 100%; height: 100%; }
+
+.file-card__body {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.file-card__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 档案条目：键 + 值 */
+.file-rows { margin-top: 24px; border-top: 1px solid var(--border); }
+
+.file-row {
+  display: flex;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-row__key {
+  flex: 0 0 120px;
+  font: 500 12px/1.6 var(--font-mono);
+  letter-spacing: 0.16em;
+  color: var(--text-tertiary);
+}
+
+.file-row__val {
+  flex: 1 1 auto;
+  font: 400 15px/1.7 var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* 引文块 */
+.quote {
+  position: relative;
+  padding-left: 20px;
+  border-left: 1px solid rgba(var(--accent-rgb), 0.45);
+  font: 600 17px/1.85 var(--font-serif);
+  color: var(--text);
+}
+
+/* ============================================================================
+   5. 任意门（联系方式 CTA 卡片）
+   ========================================================================== */
+
+.door {
+  position: relative;
+  display: block;
+  padding: 48px 40px;
+  border-radius: var(--r-card-lg);
+  border: 1px solid rgba(var(--c-door-rgb), 0.28);
+  background:
+    linear-gradient(180deg, rgba(var(--c-door-rgb), 0.10), transparent 60%),
+    var(--surface);
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.45s var(--ease-out),
+    border-color 0.45s var(--ease-out),
+    box-shadow 0.45s var(--ease-out);
+}
+
+/* 门缝：一条 2px 的竖直光，默认收起 */
+.door::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--grad-glow);
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: 50% 50%;
+  box-shadow: 0 0 40px 12px rgba(var(--accent-rgb), 0.45);
+  transition: transform 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+.door:hover::before,
+.door:focus-visible::before { transform: translateX(-50%) scaleY(1); }
+
+/* 门后的光：hover 时从门缝向两侧展开 */
+.door::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    120% 80% at 50% 50%,
+    rgba(var(--c-door-rgb), 0.20),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+.door:hover::after,
+.door:focus-visible::after { opacity: 1; }
+
+.door:hover,
+.door:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(var(--c-door-rgb), 0.55);
+  box-shadow:
+    0 0 48px rgba(var(--c-door-rgb), 0.18),
+    0 32px 64px rgba(var(--shadow-rgb), 0.5);
+}
+
+.door__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.door__main { flex: 1 1 320px; min-width: 0; }
+
+.door__art {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 160px;
+  color: var(--c-door);
+}
+
+.door__art svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ============================================================================
+   6. 文字链接
+   ========================================================================== */
+
+.link {
+  position: relative;
+  display: inline-block;
+  color: var(--accent);
+  transition: color 0.28s var(--ease-out);
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.32s var(--ease-out);
+}
+
+.link:hover,
+.link:focus-visible { color: var(--accent-hover); }
+.link:hover::after,
+.link:focus-visible::after { width: 100%; }
+
+/* ============================================================================
+   7. 徽章 / 标签
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--accent-rgb), 0.10);
+  font: 500 12px/1 var(--font-mono);
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* 角色徽章：用角色色，字距收窄（中文不需要大写间距） */
+.badge--char {
+  border-color: rgba(var(--char-rgb, var(--accent-rgb)), 0.36);
+  background: rgba(var(--char-rgb, var(--accent-rgb)), 0.12);
+  color: var(--char, var(--accent));
+  font-family: var(--font-body);
+  letter-spacing: 0.06em;
+}
+
+/* 已通关态 */
+.badge--cleared {
+  border-color: rgba(var(--success-rgb), 0.36);
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--success);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: 400 12px/1 var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+   8. 通关进度条（页面最顶上 3px）
+   ========================================================================== */
+
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-progress);
+  height: 3px;
+  background: var(--grad-glow);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.45);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.12s linear;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   9. 关卡轨道（右侧竖向导航，≥1200px 才出现）
+   ========================================================================== */
+
+.rail {
+  position: fixed;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-rail);
+  display: none;                 /* 由 responsive.css 在 ≥1200px 打开 */
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.rail__node {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;                   /* 触碰友好 */
+  height: 44px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  --char: var(--text-tertiary);
+  --char-rgb: var(--text-tertiary-rgb);
+  color: var(--char);
+  font: 500 12px/1 var(--font-num);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform 0.32s var(--ease-out),
+    color 0.32s var(--ease-out),
+    background 0.32s var(--ease-out),
+    border-color 0.32s var(--ease-out),
+    box-shadow 0.32s var(--ease-out);
+}
+
+.rail__node::before {
+  content: '';
+  position: absolute;
+  right: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.32s var(--ease-out), width 0.32s var(--ease-out);
+}
+
+.rail__node:hover {
+  transform: translateX(-3px);
+  color: var(--char);
+  background: rgba(var(--char-rgb), 0.10);
+}
+
+.rail__node:hover::before {
+  opacity: 0.6;
+  width: 14px;
+}
+
+/* 已通关：角色色点亮 + 边框 */
+.rail__node.is-cleared {
+  color: var(--char);
+  border-color: rgba(var(--char-rgb), 0.32);
+  background: rgba(var(--char-rgb), 0.08);
+}
+
+.rail__node.is-cleared::before { opacity: 0.5; }
+
+/* 当前所在关卡：位移 + 放大 + 光晕 */
+.rail__node.is-active {
+  transform: translateX(-6px) scale(1.06);
+  color: var(--char);
+  border-color: rgba(var(--char-rgb), 0.55);
+  background: rgba(var(--char-rgb), 0.16);
+  box-shadow: 0 0 24px rgba(var(--char-rgb), 0.28);
+}
+
+.rail__node.is-active::before {
+  opacity: 1;
+  width: 18px;
+}
+
+/* 轨道上的文字气泡（hover 显示关卡名） */
+.rail__tip {
+  position: absolute;
+  right: 56px;
+  top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  font: 400 12px/1 var(--font-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.28s var(--ease-out),
+    transform 0.28s var(--ease-out);
+}
+
+.rail__node:hover .rail__tip,
+.rail__node:focus-visible .rail__tip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ============================================================================
+   10. 底部通关胶囊（<1200px 显示）
+   ========================================================================== */
+
+.clear-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: var(--z-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: rgba(var(--bg-rgb), 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font: 500 13px/1 var(--font-body);
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(var(--shadow-rgb), 0.5);
+  transition:
+    color 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+
+.clear-pill:hover,
+.clear-pill:focus-visible {
+  color: var(--text);
+  border-color: var(--border-hover);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.clear-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
+  flex: 0 0 auto;
+}
+
+/* ============================================================================
+   11. 抽屉（四次元口袋 → 道具清单）
+   ========================================================================== */
+
+/* 抽屉打开时锁住背景滚动（由 js/drawer.js 添加/移除） */
+body.is-drawer-open { overflow: hidden; }
+
+/* 乱码解码进行中的提示：让正在"解码"的文字带一点点强调色 */
+.is-scrambling { color: var(--accent); }
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-scrim);
+  background: rgba(var(--bg-rgb), 0.72);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s var(--ease-out), visibility 0.35s;
+}
+
+.drawer-scrim.is-open { opacity: 1; visibility: visible; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-drawer);
+  width: min(420px, 88vw);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-alt);
+  border-left: 1px solid var(--border);
+  box-shadow: -32px 0 80px rgba(var(--shadow-rgb), 0.6);
+  transform: translateX(100%);
+  transition: transform 0.42s var(--ease-out);
+  overflow-y: auto;
+}
+
+.drawer.is-open { transform: translateX(0); }
+
+.drawer__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer__title {
+  font: 700 18px/1.3 var(--font-heading);
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.drawer__close {
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.28s var(--ease-out),
+    border-color 0.28s var(--ease-out),
+    background 0.28s var(--ease-out);
+}
+
+.drawer__close:hover,
+.drawer__close:focus-visible {
+  color: var(--text);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.drawer__close svg { width: 18px; height: 18px; }
+
+.drawer__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;              /* 触碰友好 */
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  transition:
+    transform 0.28s var(--ease-out),
+    color 0.28s var(--ease-out),
+    background 0.28s var(--ease-out),
+    border-color 0.28s var(--ease-out);
+}
+
+.drawer__item:hover,
+.drawer__item:focus-visible {
+  transform: translateX(-3px);
+  color: var(--text);
+  background: var(--surface);
+  border-color: rgba(var(--char-rgb, var(--accent-rgb)), 0.32);
+}
+
+.drawer__item .mono {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--char, var(--text-tertiary));
+}
+
+.drawer__art {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  color: var(--char, var(--accent));
+  opacity: 0.8;
+}
+
+.drawer__art svg { width: 100%; height: 100%; overflow: visible; }
+
+.drawer__note {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font: 600 14px/1.8 var(--font-serif);
+  color: var(--text);
+}
+
+/* ============================================================================
+   12. Hero（序章）
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;             /* 回退 */
+  min-height: 100dvh;
+  padding-top: 120px;
+  padding-bottom: 96px;
+  overflow: hidden;
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 64px;
+  align-items: center;
+}
+
+.hero__eyebrow { margin-bottom: 20px; }
+
+.hero__h1 {
+  font: 900 clamp(60px, 8.5vw, 96px)/1.15 var(--font-heading);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.hero__lead {
+  max-width: 560px;
+  font: 400 17px/1.85 var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* 首屏身份行：法学本科 2026 届 · 现居深圳 · 探索 AI 方向。
+   评审意见：法学背景与 AI 方向在原首屏能看到，但「深圳」和「2026 届」
+   只写在 <meta name="description"> 里，第一眼看不到 —— 这行把它们提到台面上。
+   三段之间用一根细竖线分隔，窄屏会自动换行（换行时竖线可能落在行首，1px 宽、可忽略）。 */
+.hero__id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 20px;
+  font: 500 14px/1.6 var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.hero__id span { white-space: nowrap; }
+
+.hero__id span + span {
+  position: relative;
+  padding-left: 15px;
+}
+
+.hero__id span + span::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 12px;
+  margin-top: -6px;
+  background: var(--border-hover);
+}
+
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+}
+
+/* 四次元口袋：Hero 右侧半透明彩蛋入口 */
+.hero__aside {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pocket {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+}
+
+.pocket:hover,
+.pocket:focus-visible {
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
+.pocket svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 口袋旁边的一行小字提示（hover 才明显） */
+.pocket__hint {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 500 12px/1.6 var(--font-mono);
+  letter-spacing: 0.16em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  transition: color 0.4s var(--ease-out);
+}
+
+.pocket:hover .pocket__hint,
+.pocket:focus-visible .pocket__hint { color: var(--accent); }
+
+/* 滚动提示（Hero 底部） */
+.hero__scroll {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font: 500 11px/1.6 var(--font-mono);
+  letter-spacing: 0.16em;
+  color: var(--text-tertiary);
+}
+
+.hero__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.8), transparent);
+}
+
+/* ============================================================================
+   13. 时间线（关卡 01）
+   ========================================================================== */
+
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(var(--char-rgb, var(--accent-rgb)), 0.6), transparent);
+}
+
+.timeline__item {
+  position: relative;
+  padding-bottom: 32px;
+}
+
+.timeline__item:last-child { padding-bottom: 0; }
+
+.timeline__item::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: 8px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--char-rgb, var(--accent-rgb)), 0.8);
+  background: var(--bg);
+  box-shadow: 0 0 12px rgba(var(--char-rgb, var(--accent-rgb)), 0.5);
+}
+
+.timeline__date {
+  font: 500 12px/1.6 var(--font-mono);
+  letter-spacing: 0.16em;
+  color: var(--char, var(--accent));
+}
+
+.timeline__title {
+  margin-top: 6px;
+  font: 700 17px/1.5 var(--font-heading);
+  color: var(--text);
+}
+
+.timeline__desc {
+  margin-top: 8px;
+  font: 400 15px/1.8 var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+   14. 记录卡（关卡 01 / 04）
+   ========================================================================== */
+
+.record-card {
+  position: relative;
+  padding: 28px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    background 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+/* 卡片目前全是静态文案，没有链接 —— 所以 hover 只给一层很淡的描边 + 表面提亮，
+   不做位移、不给大投影。原来那套「上浮 + 光晕」会让静态卡看起来可以点。
+   真做成链接的卡片用 .record-card--link（见下），才恢复可点反馈。 */
+.record-card:hover {
+  border-color: rgba(var(--char-rgb, var(--accent-rgb)), 0.35);
+  background: var(--surface-hover);
+}
+
+/* 可点卡片：必须是 <a> 且带真实 href，才配这套反馈。
+   键盘焦点样式直接复用 tokens.css 的全局 :focus-visible（2px 青色描边）。 */
+.record-card--link {
+  display: block;
+  text-decoration: none;
+  transition:
+    transform 0.4s var(--ease-out),
+    background 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+.record-card--link:hover,
+.record-card--link:focus-visible {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 32px rgba(var(--char-rgb, var(--accent-rgb)), 0.12),
+    0 24px 48px rgba(var(--shadow-rgb), 0.45);
+}
+
+.record-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.record-card__title {
+  font: 700 18px/1.45 var(--font-heading);
+  color: var(--text);
+}
+
+.record-card__desc {
+  margin-top: 10px;
+  font: 400 15px/1.8 var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+   15. 工具卡（关卡 05 · 哆啦A梦的方法论）
+   ========================================================================== */
+
+.tool-card {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 28px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition:
+    background 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+/* 同 .record-card：静态内容不做「可点」的位移反馈，只提亮描边 */
+.tool-card:hover {
+  border-color: rgba(var(--char-rgb, var(--accent-rgb)), 0.35);
+  background: var(--surface-hover);
+}
+
+.tool-card__no {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(var(--char-rgb, var(--accent-rgb)), 0.32);
+  background: rgba(var(--char-rgb, var(--accent-rgb)), 0.10);
+  font: 700 16px/1 var(--font-num);
+  color: var(--char, var(--accent));
+}
+
+.tool-card__main { min-width: 0; }
+
+.tool-card__title {
+  font: 700 17px/1.4 var(--font-heading);
+  color: var(--text);
+}
+
+.tool-card__desc {
+  margin-top: 8px;
+  font: 400 15px/1.8 var(--font-body);
+  color: var(--text-secondary);
+}
+
+.tool-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ============================================================================
+   16. 页脚（⚠️ 2026-10-01 起这一节是死样式：页脚已按需求整块下线，
+   7 个页面里都没有 .footer 的标记了，生成器里的 FOOTER 常量也撤了。
+   样式留着，想恢复就把标记加回去。下面这段是它当年的来历。）
+   ----------------------------------------------------------------------------
+   历史：2026-09-30 曾把整块页脚删掉。那一版是「品牌 + 页脚导航 + 非官方同人声明
+   + 版权行」四段堆叠，1440×900 实测占 392px，会把子页面顶出第二屏。
+   后来按评审意见加回来，但压成**单行**：站名 · 首页 · 联系方式，
+   1440×900 实测 45px，不再破坏「子页面一屏装得下」的目标。
+
+   2026-10-01：原本这行尾巴上还挂着一句非官方同人声明（.footer__note），
+   按需求删掉了，连同它的样式。
+
+   没有加「最后更新日期」：生成器是幂等的，重跑一次不代表内容变了，
+   写个日期出来就是假的（评审也要求「只在能准确维护时再加」）。
+
+   ⚠️ 存档文件 index-闯关版.html 里还留着旧版多段页脚的结构（.footer__top /
+   .footer__links / .footer__disclaimer / .footer__meta），它只是留档、不参与发布，
+   那几类元素现在没有样式。本节的 .footer__brand / .footer__link / .footer__sep
+   是新写的单行版命名，和旧版不共用。
+   ========================================================================== */
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding-block: 16px;
+}
+
+.footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  text-align: center;
+}
+
+.footer__brand {
+  font: 700 13px/1.7 var(--font-heading);
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.footer__link {
+  font: 400 13px/1.7 var(--font-body);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.28s var(--ease-out);
+}
+
+.footer__link:hover,
+.footer__link:focus-visible { color: var(--accent); }
+
+.footer__sep {
+  color: var(--text-tertiary);
+  user-select: none;
+}
